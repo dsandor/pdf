@@ -81,6 +81,33 @@ func (r *Reader) GetPlainText() (reader io.Reader, err error) {
 	return &buf, nil
 }
 
+// GetPlainTextSlice returns all the text in the PDF file in a slice
+func (r *Reader) GetPlainTextSlice() ([]string, error) {
+	pages := r.NumPage()
+	fonts := make(map[string]*Font)
+	var textLines []string
+
+	for i := 1; i <= pages; i++ {
+		p := r.Page(i)
+
+		for _, name := range p.Fonts() { // cache fonts so we don't continually parse charmap
+			if _, ok := fonts[name]; !ok {
+				f := p.Font(name)
+				fonts[name] = &f
+			}
+		}
+
+		text, err := p.GetPlainText(fonts)
+
+		if err != nil {
+			return nil, err
+		}
+
+		textLines = append(textLines, text)
+	}
+	return textLines, nil
+}
+
 func (p Page) findInherited(key string) Value {
 	for v := p.V; !v.IsNull(); v = v.Key("Parent") {
 		if r := v.Key(key); !r.IsNull() {
