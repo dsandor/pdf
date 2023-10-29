@@ -533,11 +533,15 @@ func (p Page) GetPlainText(fonts map[string]*Font) (result string, err error) {
 
 	var textBuilder bytes.Buffer
 	showText := func(s string) {
-		for _, ch := range enc.Decode(s) {
-			_, err := textBuilder.WriteRune(ch)
-			if err != nil {
-				panic(err)
+		if s != "\n" {
+			for _, ch := range enc.Decode(s) {
+				_, err := textBuilder.WriteRune(ch)
+				if err != nil {
+					panic(err)
+				}
 			}
+		} else {
+			textBuilder.WriteRune(' ')
 		}
 	}
 
@@ -551,6 +555,8 @@ func (p Page) GetPlainText(fonts map[string]*Font) (result string, err error) {
 		switch op {
 		default:
 			return
+		case "ET":
+			showText("\n")
 		case "T*": // move to start of next line
 			showText("\n")
 		case "Tf": // set text font and size
